@@ -9,7 +9,7 @@ license: MIT
 Drive and observe a **running macOS app** with free local tooling (Accessibility API + `screencapture` + CGEvent). The user keeps working the whole time: every command here leaves their focus and cursor alone unless you explicitly opt into `--steal`.
 
 TRIGGER when: verify/test/click-through/screenshot a running **macOS** (not iOS) app; "does the Mac app work", "check this UI change", drive a flow end-to-end.
-DO NOT TRIGGER for: iOS/iPad apps (`device-interaction` / xcode MCP `DeviceInteraction*`); pure build/test/log tasks (xcode MCP `RunProject`/`RunSomeTests`/`GetConsoleOutput`); single SwiftUI view snapshots (xcode MCP `RenderPreview`).
+DO NOT TRIGGER for: iOS/iPad apps (use your iOS device/simulator tools); pure build/test/log tasks (use your Xcode-provided build/test tools); single SwiftUI view snapshots (use a preview-rendering tool if you have one).
 
 ## Commands
 
@@ -71,7 +71,7 @@ Consequence: for "select all then retype", don't send `cmd+a` — use `setval` (
 
 On a machine the user is actively using, nothing that requires the app to be key/frontmost is reliably drivable background-safe. That includes: text-selection→highlight and other drags on a canvas, hover-reveal controls (tab ✕, annotation-delete), typed input into a non-key sheet/panel, and file-open panels (`NSOpenPanel`). `drag`/`hover` exist so you can *try* and cheaply confirm from a `snap`, but if the first attempt is swallowed, do not grind through 15 variations — you've hit the ceiling. Two ways past it, both explicit trade-offs:
 - **Accept focus theft** — `--steal` a click to make the window key, drive the flow, restore. ~1s of visible disruption; warn the user.
-- **Write an XCUITest** — for anything repeatable, or any drag/canvas/file-panel/hover flow, this is the right tool, run via xcode MCP `RunSomeTests`. It gets a real event stream.
+- **Write an XCUITest** — for anything repeatable, or any drag/canvas/file-panel/hover flow, this is the right tool, run via your Xcode-provided test tools (or `xcodebuild test`). It gets a real event stream.
 
 The read/verify half (does this panel render, does this toggle flip, does this banner appear) is genuinely good and non-disruptive — that's the sweet spot. Match the tool to the flow.
 
@@ -85,7 +85,7 @@ The read/verify half (does this panel render, does this toggle flip, does this b
 
 - Reads (`snap`, `dump`) work on any display, awake or not — drive from those whenever possible.
 - Synthetic clicks and AXPress can fail on windows sitting on a sleeping or secondary display (black snap, grey traffic lights, AXPress error -25204, clicks silently ignored). Don't fight it with scale-factor archaeology: `macdrive move <App> 100 100` pulls the window onto the main display background-safely; drive it there; `move` it back to the origin it printed when done.
-- If coordinate clicks still miss twice after `move`, stop and escalate to the computer-use MCP with `switch_display`, which has per-display coordinates and its own screenshots. Do not keep deriving conversion formulas.
+- If coordinate clicks still miss twice after `move`, stop and escalate to a computer-use tool if you have one (they have per-display coordinates and their own screenshots). Do not keep deriving conversion formulas.
 
 ## Failure playbook
 
@@ -100,7 +100,7 @@ The read/verify half (does this panel render, does this toggle flip, does this b
 - **Action "succeeded" but nothing changed** — normal; see the Reliability table. Re-snap, then try the semantic alternative (`menu` for keys, `--steal` for clicks).
 - **Modal sheet blocking** — sheets appear inside `dump`; `press <App> "Cancel"` (or the right button) dismisses them background-safely.
 - **App-level AppleScript (`tell application "TextEdit" to get text of document 1`) hangs** — apps can be unresponsive to Apple Events while showing suggestion popovers/dialogs; wrap in `with timeout of 5 seconds` or just use `dump`, which reads via AX and doesn't hang.
-- **Fallback to computer-use for one task** - after you've tried all the debugging steps and are absolutely sure that the action you're required to take cannot be conducted using this skill. Spin up a sonnet sub-agent give it the exact instructions to use computer-use, execute your desired action and kill itself and then pick up with this skill again. This is your last resort before completely falling back on computer-use for the entire task try this first. 
+- **Fallback to computer-use for one action** — after you've tried all the debugging steps and are sure the action can't be done with this skill, and you have a computer-use tool available: delegate just that one action to it (a sub-agent is ideal — give it exact instructions, let it perform the action, then discard it), then pick up with this skill again. Try this before falling back to computer-use for the entire task.
 
 ## Permissions (one-time)
 
@@ -108,5 +108,5 @@ The controlling terminal needs, in System Settings → Privacy & Security: **Acc
 
 ## When to escalate
 
-- Repeatable regression instead of a one-off drive → write an **XCUITest**, run via xcode MCP `RunSomeTests`.
-- No identifiers/labels AND coordinates too fragile (canvas/animated UI) → computer-use is the paid fallback.
+- Repeatable regression instead of a one-off drive → write an **XCUITest**, run via your Xcode-provided test tools (or `xcodebuild test`).
+- No identifiers/labels AND coordinates too fragile (canvas/animated UI) → a computer-use tool, if available, is the (paid) fallback.
