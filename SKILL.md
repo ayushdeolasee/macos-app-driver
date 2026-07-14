@@ -1,6 +1,6 @@
 ---
 name: macos-app-driver
-description: Inspect and drive a running macOS app's UI without computer-use — screenshot windows, dump the accessibility hierarchy with identifiers, press/type/set values, run menus, all without stealing the user's focus or cursor. Use when asked to verify, test, click through, screenshot, or "see" a running Mac app (not iOS), or to check a macOS UI change end-to-end.
+description: Inspect and drive a running macOS app's UI without computer-use. Screenshot windows, dump the accessibility hierarchy with identifiers, press/type/set values, run menus, all without stealing the user's focus or cursor. Use when asked to verify, test, click through, screenshot, or "see" a running Mac app (not iOS), or to check a macOS UI change end-to-end.
 license: MIT
 ---
 
